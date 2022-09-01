@@ -79,5 +79,8 @@ void Canvas::Render( wxPaintEvent &e )
 {
 	SetCurrent(*m_context);
 	glClear( GL_COLOR_BUFFER_BIT );
+
+	
+
 	SwapBuffers();
 }
