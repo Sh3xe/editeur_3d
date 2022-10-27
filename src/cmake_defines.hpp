@@ -1,3 +1,3 @@
 #pragma once
 
-#define ROOT_DIR "/media/sh3xe/hdd_win/documents/dev/projets/editeur_3d"
+#define ROOT_DIR "/home/sh3xe/Developpement/editeur_3D"

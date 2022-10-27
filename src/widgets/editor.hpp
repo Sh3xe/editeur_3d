@@ -31,7 +31,6 @@ private:
 	ScenePanel *m_scene_panel;
 	Canvas *m_canvas;
 	wxMenuBar *m_menu_bar;
-
 	DECLARE_EVENT_TABLE()
 
 };

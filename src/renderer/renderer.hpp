@@ -18,8 +18,11 @@ enum class RenderMode
 class Renderer
 {
 public:
-	Renderer();
-	~Renderer();
+	Renderer() {}
+	~Renderer() {}
+
+	bool init();
+	void shutdown();
 
 	void on_resize(int width, int height);
 
@@ -30,8 +33,8 @@ public:
 private:
 	std::vector< std::shared_ptr<Mesh> > m_meshes;
 
-	Shader m_light_shader;
-	Shader m_textured_shader;
+	std::unique_ptr<Shader> m_light_shader;
+	std::unique_ptr<Shader> m_textured_shader;
 
 	glm::mat4 m_projection_matrix;
 };

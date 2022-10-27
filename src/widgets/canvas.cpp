@@ -1,16 +1,20 @@
 #include "canvas.hpp"
 #include "core/logger.hpp"
+#include "window_ids.hpp"
 
 BEGIN_EVENT_TABLE( Canvas, wxGLCanvas )
-	EVT_PAINT(Canvas::Render)
+	EVT_PAINT(Canvas::OnPaint)
 	EVT_SIZE(Canvas::OnRezise)
-	EVT_MOUSE_EVENTS(Canvas::OnMouse)
+	EVT_MOTION(Canvas::OnMouseMove)
+	EVT_TIMER(ID_TIMER, Canvas::OnTimer)
 END_EVENT_TABLE();
 
 Canvas::Canvas( wxFrame *parent, wxGLAttributes &attrs ):
-	wxGLCanvas(parent, attrs, wxID_ANY)
+	wxGLCanvas(parent, attrs, wxID_ANY),
+	m_timer(this, ID_TIMER)
 {
 	m_parent = parent;
+	m_timer.Start(16);
 
 	// Création du contexte pour OpenGL
 	wxGLContextAttrs context_attribs;
@@ -38,11 +42,36 @@ void Canvas::OnRezise( wxSizeEvent &e )
 	if( !IsShownOnScreen() ) return;
 
 	if( !m_initialized ) InitOpenGL();
+
+	m_renderer.on_resize(e.m_size.x, e.m_size.y);
 }
 
-void Canvas::OnMouse( wxMouseEvent &e )
+void Canvas::OnMouseMove( wxMouseEvent &e )
 {
+	static wxPoint last_position = e.GetPosition();
+	wxPoint pos = e.GetPosition();
 
+	if( wxGetMouseState().LeftIsDown() )
+	{
+		wxPoint delta = wxPoint( pos.x - last_position.x, pos.y - last_position.y);
+
+		float dx = (float)delta.x / 100.0f;
+		float dy = (float)delta.y / 100.0f;
+		m_camera.rotate(dx, dy);
+	}
+
+	last_position = pos;
+
+}
+
+void Canvas::OnTimer( wxTimerEvent &e )
+{
+	Render();
+}
+
+void Canvas::OnPaint( wxPaintEvent &e )
+{
+	Render();
 }
 
 // rendu
@@ -72,15 +101,23 @@ bool Canvas::InitOpenGL()
 
 	glClearColor( 1.0f, 1.0f, 1.0f, 1.0f);
 	
+	if (!m_renderer.init())
+	{
+		SD_ERROR("Impossible d'initialiser le moteur de rendu");
+		return false;
+	}
+
+	m_cube = std::make_shared<Mesh>(create_cube());
 	return true;
 }
 
-void Canvas::Render( wxPaintEvent &e )
+void Canvas::Render()
 {
 	SetCurrent(*m_context);
-	glClear( GL_COLOR_BUFFER_BIT );
 
-	
+	m_renderer.begin_scene();
+	m_renderer.submit( m_cube );
+	m_renderer.end_scene(m_camera, RenderMode::TEXTURED);
 
 	SwapBuffers();
 }
